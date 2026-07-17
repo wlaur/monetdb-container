@@ -20,9 +20,11 @@ RUN apt-get update \
         cmake \
         curl \
         libbz2-dev \
+        libgeos-dev \
         liblz4-dev \
         liblzma-dev \
         libpcre2-dev \
+        libproj-dev \
         libssl-dev \
         pkg-config \
         python3 \
@@ -64,9 +66,11 @@ RUN apt-get update \
         bash \
         ca-certificates \
         libbz2-1.0 \
+        libgeos-c1t64 \
         liblz4-1 \
         liblzma5 \
         libpcre2-8-0 \
+        libproj25 \
         libssl3t64 \
         zlib1g \
     && rm -rf /var/lib/apt/lists/*
