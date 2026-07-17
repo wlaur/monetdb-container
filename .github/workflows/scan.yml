@@ -26,6 +26,19 @@ jobs:
           source VERSION
           echo "value=${MONETDB_VERSION}" >> "${GITHUB_OUTPUT}"
 
+      - name: Pull released ARM64 image
+        env:
+          IMAGE_REF: ghcr.io/wlaur/monetdb-container:${{ steps.version.outputs.value }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/arm64 "${IMAGE_REF}"
+          platform="$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "${IMAGE_REF}")"
+          if [[ "${platform}" != "linux/arm64" ]]; then
+            echo "Expected linux/arm64, got ${platform}" >&2
+            exit 1
+          fi
+
       - name: Scan released image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
