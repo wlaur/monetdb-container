@@ -84,6 +84,7 @@ result="$(
 SELECT value FROM sys.environment WHERE name = 'monet_version';
 SELECT value FROM sys.environment WHERE name = 'monet_release';
 SELECT 1;
+SELECT CAST(ST_Point(1, 2) AS VARCHAR(100));
 CREATE TABLE "Smoke Table" ("Text Value" VARCHAR(32));
 INSERT INTO "Smoke Table" VALUES ('ÅÄÖ');
 SELECT "Text Value" FROM "Smoke Table";
@@ -92,6 +93,7 @@ SQL
 grep --fixed-strings --quiet "11.55.7" <<< "$result"
 grep --fixed-strings --quiet "Dec2025-SP3" <<< "$result"
 grep --fixed-strings --quiet "1" <<< "$result"
+grep --fixed-strings --quiet "POINT (1 2)" <<< "$result"
 grep --fixed-strings --quiet "ÅÄÖ" <<< "$result"
 
 docker stop --time 30 "$container" >/dev/null
