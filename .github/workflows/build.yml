@@ -1,0 +1,144 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-arm64:
+    name: linux-arm64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate release metadata
+        run: scripts/check-version.sh
+
+      - name: Read build arguments
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          source VERSION
+          {
+            echo "build_args<<EOF"
+            echo "MONETDB_RELEASE=${MONETDB_RELEASE}"
+            echo "MONETDB_VERSION=${MONETDB_VERSION}"
+            echo "MONETDB_SOURCE_SHA256=${MONETDB_SOURCE_SHA256}"
+            echo "UBUNTU_VERSION=${UBUNTU_VERSION}"
+            echo "UBUNTU_DIGEST=${UBUNTU_DIGEST}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Build test image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          platforms: linux/arm64
+          load: true
+          tags: monetdb-container:test
+          build-args: ${{ steps.version.outputs.build_args }}
+          cache-from: type=gha,scope=linux-arm64
+          cache-to: type=gha,mode=max,scope=linux-arm64
+          provenance: false
+
+      - name: Check runtime dependencies
+        run: scripts/check-runtime-deps.sh monetdb-container:test
+
+      - name: Run smoke test
+        run: scripts/smoke-test.sh monetdb-container:test
+
+      - name: Scan test image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: monetdb-container:test
+          format: table
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: Log in to GitHub Container Registry
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v') && vars.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Prepare release tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: tags
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source VERSION
+          image_revision="${GITHUB_REF_NAME#v}"
+          image_version="${image_revision%-*}"
+          revision="${image_revision##*-}"
+          if [[ "$image_version" != "$MONETDB_VERSION" || ! "$revision" =~ ^[1-9][0-9]*$ ]]; then
+            echo "release tag must match v${MONETDB_VERSION}-N" >&2
+            exit 1
+          fi
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          tags=(
+            "ghcr.io/${owner}/monetdb-container:${image_revision}"
+            "ghcr.io/${owner}/monetdb-container:${MONETDB_VERSION}"
+            "ghcr.io/${owner}/monetdb-container:${MONETDB_RELEASE}"
+          )
+          if [[ -n "${DOCKERHUB_USERNAME}" ]]; then
+            namespace="${DOCKERHUB_USERNAME,,}"
+            tags+=(
+              "${namespace}/monetdb-container:${image_revision}"
+              "${namespace}/monetdb-container:${MONETDB_VERSION}"
+              "${namespace}/monetdb-container:${MONETDB_RELEASE}"
+            )
+          fi
+          {
+            echo "value<<EOF"
+            printf '%s\n' "${tags[@]}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Publish release image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.value }}
+          build-args: ${{ steps.version.outputs.build_args }}
+          cache-from: type=gha,scope=linux-arm64
+          provenance: mode=max
+          sbom: true
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
