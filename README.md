@@ -10,17 +10,16 @@ runners. It is not an official MonetDB distribution.
 
 ## Images
 
-Release tags publish to:
+Release tags publish the same image to both registries:
 
 ```text
 ghcr.io/wlaur/monetdb-container:11.55.7
-ghcr.io/wlaur/monetdb-container:Dec2025-SP3
+wlaur/monetdb-container:11.55.7
 ```
 
-Both aliases point to the same `linux/arm64` image. A revisioned immutable tag,
-such as `11.55.7-1`, is also published. There is intentionally no `latest` tag.
-Docker Hub receives the same tags when the repository's optional
-[Docker Hub settings](DOCKER_HUB.md) are configured.
+The `Dec2025-SP3` release alias and a revisioned immutable tag, such as
+`11.55.7-1`, are also published to both registries. All tags initially point
+to the same `linux/arm64` image. There is intentionally no `latest` tag.
 
 Docker containers use a Linux kernel. On an Apple Silicon Mac, OrbStack or
 Docker Desktop runs this `linux/arm64` image natively inside its Linux VM. A
