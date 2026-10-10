@@ -3,7 +3,7 @@
 Unofficial container images for [MonetDB](https://www.monetdb.org/), initially
 targeting native `linux/arm64`.
 
-The current image contains MonetDB Dec2025-SP3 (11.55.7). MonetDB's official
+The current image contains MonetDB Dec2025-SP4 (11.55.9). MonetDB's official
 Docker Hub image currently supplies `linux/amd64`; this repository fills the
 native ARM64 gap for Apple Silicon development environments and ARM CI
 runners. It is not an official MonetDB distribution.
@@ -13,12 +13,12 @@ runners. It is not an official MonetDB distribution.
 Release tags publish the same image to both registries:
 
 ```text
-ghcr.io/wlaur/monetdb-container:11.55.7
-wlaur/monetdb-container:11.55.7
+ghcr.io/wlaur/monetdb-container:11.55.9
+wlaur/monetdb-container:11.55.9
 ```
 
-The `Dec2025-SP3` release alias and a revisioned immutable tag, such as
-`11.55.7-1`, are also published to both registries. All tags initially point
+The `Dec2025-SP4` release alias and a revisioned immutable tag, such as
+`11.55.9-1`, are also published to both registries. All tags initially point
 to the same `linux/arm64` image. There is intentionally no `latest` tag.
 
 Docker containers use a Linux kernel. On an Apple Silicon Mac, OrbStack or
@@ -38,7 +38,7 @@ docker run --detach \
   --mount type=volume,source=monetdb-data,target=/var/monetdb5/dbfarm \
   --env MDB_DB_ADMIN_PASS=monetdb \
   --env MDB_CREATE_DBS=test \
-  ghcr.io/wlaur/monetdb-container:11.55.7
+  ghcr.io/wlaur/monetdb-container:11.55.9
 ```
 
 Do not use the example password outside local development.
@@ -76,13 +76,13 @@ shutdown, read-only-root operation, and persistent restart behavior.
 
 [`VERSION`](VERSION) records every reviewed release input:
 
-- MonetDB Dec2025-SP3 source archive, version 11.55.7
-- SHA-256 `533042923b6a19d51a4ed5a31fe3e7d9c8bc156ba1f88f9a5fe9305059cacdfd`
+- MonetDB Dec2025-SP4 source archive, version 11.55.9
+- SHA-256 `95f5aeee9f3cb70ac462ca7c5ee74e7c01a35a7dde69c1501f5ddb80b9d8a468`
 - Ubuntu 24.04 multi-platform base-image digest
 - upstream container revision used for the entrypoint
 
 The source checksum matches MonetDB's
-[PGP-signed checksum file](https://www.monetdb.org/downloads/sources/Dec2025-SP3/SHA256SUM).
+[PGP-signed checksum file](https://www.monetdb.org/downloads/sources/Dec2025-SP4/SHA256SUM).
 The build verifies the archive checksum before extraction. GitHub Actions are
 pinned by full commit SHA, release images include OCI provenance and an SBOM,
 and Trivy scans both builds and the published image.
@@ -90,12 +90,12 @@ and Trivy scans both builds and the published image.
 ## Releases
 
 The native ARM64 build and smoke test run on every pull request and push. A tag
-matching `v<MonetDB-version>-<image-revision>`, for example `v11.55.7-1`,
+matching `v<MonetDB-version>-<image-revision>`, for example `v11.55.9-1`,
 publishes the image:
 
 ```console
-git tag v11.55.7-1
-git push origin v11.55.7-1
+git tag v11.55.9-1
+git push origin v11.55.9-1
 ```
 
 Before tagging, confirm the main-branch build is green. Record the resulting
@@ -115,4 +115,4 @@ The adapted entrypoint preserves its source header and attribution.
 
 This repository is licensed under the [Mozilla Public License 2.0](LICENSE).
 MonetDB source and its own notices are available from the
-[official release archive](https://www.monetdb.org/downloads/sources/Dec2025-SP3/).
+[official release archive](https://www.monetdb.org/downloads/sources/Dec2025-SP4/).

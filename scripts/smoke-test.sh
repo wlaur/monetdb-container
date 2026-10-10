@@ -90,8 +90,8 @@ INSERT INTO "Smoke Table" VALUES ('ÅÄÖ');
 SELECT "Text Value" FROM "Smoke Table";
 SQL
 )"
-grep --fixed-strings --quiet "11.55.7" <<< "$result"
-grep --fixed-strings --quiet "Dec2025-SP3" <<< "$result"
+grep --fixed-strings --quiet "11.55.9" <<< "$result"
+grep --fixed-strings --quiet "Dec2025-SP4" <<< "$result"
 grep --fixed-strings --quiet "1" <<< "$result"
 grep --fixed-strings --quiet "POINT (1 2)" <<< "$result"
 grep --fixed-strings --quiet "ÅÄÖ" <<< "$result"
